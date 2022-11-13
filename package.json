@@ -17,6 +17,7 @@
   "main": "dist/pmap-lit.cjs",
   "module": "dist/pmap-lit.module.js",
   "exports": {
+    "types": "./index.d.ts",
     "require": "./dist/pmap-lit.cjs",
     "import": "./dist/pmap-lit.modern.js"
   },
@@ -31,7 +32,7 @@
     "prepublishOnly": "./Taskfile.sh build"
   },
   "devDependencies": {
-    "@jvdx/core": "^2.19.0"
+    "@jvdx/core": "^3.1.0"
   },
   "prettier": "@jvdx/prettier-config",
   "prettierIgnore": [
