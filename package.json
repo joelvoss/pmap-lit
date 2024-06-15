@@ -2,7 +2,7 @@
   "name": "pmap-lit",
   "description": "This package is a helper to run multiple promise-returning & async functions with limited concurrency.",
   "version": "2.0.0",
-  "author": "Joel Voß <mail@joelvoss.com>",
+  "author": "Joel Voss <mail@joelvoss.com>",
   "license": "MIT",
   "homepage": "https://github.com/joelvoss/pmap-lit",
   "bugs": {
@@ -16,36 +16,36 @@
     "node": ">=18"
   },
   "type": "module",
-  "source": "src/index.js",
-  "main": "dist/pmap-lit.cjs",
-  "module": "dist/pmap-lit.module.js",
-  "exports": {
-    "types": "./index.d.ts",
-    "require": "./dist/pmap-lit.cjs",
-    "import": "./dist/pmap-lit.modern.js"
-  },
-  "types": "index.d.ts",
   "files": [
     "dist",
     "LICENSE",
-    "index.d.ts"
+    "README.md"
   ],
+  "source": "./src/index.ts",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    "types": "./dist/index.d.ts",
+    "import": "./dist/index.js",
+    "require": "./dist/index.cjs"
+  },
   "scripts": {
     "test": "./Taskfile.sh test",
     "prepublishOnly": "./Taskfile.sh build"
   },
   "devDependencies": {
-    "@jvdx/core": "^3.6.0"
+    "@jvdx/eslint-config": "^4.3.0",
+    "@jvdx/prettier-config": "^0.3.4",
+    "@types/node": "^20.14.2",
+    "prettier": "^3.3.1",
+    "typescript": "^5.4.5",
+    "vite": "^5.2.13",
+    "vite-plugin-dts": "^3.9.1",
+    "vitest": "^1.6.0"
   },
   "prettier": "@jvdx/prettier-config",
   "prettierIgnore": [
-    "tests/",
-    "dist/"
-  ],
-  "eslintConfig": {
-    "extends": "@jvdx/eslint-config"
-  },
-  "eslintIgnore": [
     "tests/",
     "dist/"
   ]

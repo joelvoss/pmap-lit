@@ -8,14 +8,12 @@ iteration on errors.
 
 ## Requirements
 
-- Node v12+
+- Node v18+
 
 ## Installation
 
 ```bash
 $ npm i pmap-lit
-# or
-$ yarn add pmap-lit
 ```
 
 ## Usage
@@ -62,7 +60,3 @@ $ ./Taskfile.sh validate
 
 (3) Start developing. See [`./Taskfile.sh`](./Taskfile.sh) for more tasks to
 help you develop.
-
----
-
-_This project was set up by @jvdx/core_

@@ -1,10 +1,15 @@
-function delay(ms) {
+import { describe, expect, test } from 'vitest';
+import { pMap, pMapSkip, AggregateError, PMapError } from '../src/index';
+
+////////////////////////////////////////////////////////////////////////////////
+
+function delay(ms: number) {
 	return new Promise(r => setTimeout(r, ms));
 }
 
-function inRange(num, { start = 0, end }) {
-	const min = (left, right) => (left < right ? left : right);
-	const max = (left, right) => (left > right ? left : right);
+function inRange(num: number, { start = 0, end }) {
+	const min = (left: number, right: number) => (left < right ? left : right);
+	const max = (left: number, right: number) => (left > right ? left : right);
 	return num >= min(start, end) && num <= max(end, start);
 }
 
@@ -18,19 +23,23 @@ function timeSpan() {
 	return () => end();
 }
 
-function randomInt(min, max) {
+function randomInt(min: number, max: number) {
 	return Math.floor(Math.random() * (max - min + 1) + min);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-const sharedInput = [
+type InputValue = number | (() => Promise<number>);
+type InputElement = [InputValue, number];
+type Input = InputElement[];
+
+const sharedInput: Input = [
 	[async () => 10, 300],
 	[20, 200],
 	[30, 100],
 ];
 
-const errorInput1 = [
+const errorInput1: Input = [
 	[20, 200],
 	[30, 100],
 	[
@@ -47,7 +56,7 @@ const errorInput1 = [
 	],
 ];
 
-const errorInput2 = [
+const errorInput2: Input = [
 	[20, 200],
 	[
 		async () => {
@@ -64,7 +73,14 @@ const errorInput2 = [
 	],
 ];
 
-const mapper = async ([value, ms]) => {
+////////////////////////////////////////////////////////////////////////////////
+
+type MapperValue = number | (() => Promise<number>);
+type MapperElement = [MapperValue, number];
+
+async function mapper(element: MapperElement) {
+	let [value, ms] = element;
+
 	await delay(ms);
 
 	if (typeof value === 'function') {
@@ -72,10 +88,16 @@ const mapper = async ([value, ms]) => {
 	}
 
 	return value;
-};
+}
+
+////////////////////////////////////////////////////////////////////////////////
 
 class ThrowingIterator {
-	constructor(max, throwOnIndex) {
+	_max: number;
+	_throwOnIndex: number;
+	index: number;
+
+	constructor(max: number, throwOnIndex: number) {
 		this._max = max;
 		this._throwOnIndex = throwOnIndex;
 		this.index = 0;
@@ -107,8 +129,6 @@ class ThrowingIterator {
 ////////////////////////////////////////////////////////////////////////////////
 
 describe(`pMap`, () => {
-	const { pMap, AggregateError, pMapSkip } = require('../src/index');
-
 	test('base', async () => {
 		const end = timeSpan();
 
@@ -149,7 +169,7 @@ describe(`pMap`, () => {
 
 	test('async with concurrency: 2 (random time sequence)', async () => {
 		const input = Array.from({ length: 10 }).map(() => randomInt(0, 100));
-		const mapper = async value => {
+		const mapper = async (value: number) => {
 			await delay(value);
 			return value;
 		};
@@ -160,7 +180,7 @@ describe(`pMap`, () => {
 
 	test('async with concurrency: 2 (problematic time sequence)', async () => {
 		const input = [100, 200, 10, 36, 13, 45];
-		const mapper = async value => {
+		const mapper = async (value: number) => {
 			await delay(value);
 			return value;
 		};
@@ -171,7 +191,7 @@ describe(`pMap`, () => {
 
 	test('async with concurrency: 2 (out of order time sequence)', async () => {
 		const input = [200, 100, 50];
-		const mapper = async value => {
+		const mapper = async (value: number) => {
 			await delay(value);
 			return value;
 		};
@@ -186,13 +206,13 @@ describe(`pMap`, () => {
 		try {
 			await pMap([], () => {}, { concurrency: 0 });
 		} catch (err) {
-			expect(err instanceof TypeError).toBe(true);
+			expect(err instanceof PMapError).toBe(true);
 		}
 
 		try {
 			await pMap([], () => {}, { concurrency: 1.5 });
 		} catch (err) {
-			expect(err instanceof TypeError).toBe(true);
+			expect(err instanceof PMapError).toBe(true);
 		}
 
 		let res = await pMap([], () => {}, { concurrency: 1 });
@@ -253,7 +273,7 @@ describe(`pMap`, () => {
 			3,
 		];
 
-		const mappedValues = [];
+		const mappedValues: number[] = [];
 		try {
 			await pMap(input, async value => {
 				value = typeof value === 'function' ? await value() : value;
@@ -294,10 +314,12 @@ describe(`pMap`, () => {
 		expect(res).toEqual([]);
 	});
 
-	//////////////////////////////////////////////////////////////////////////////
+	// //////////////////////////////////////////////////////////////////////////////
 
 	describe('AsyncIterator', () => {
 		class AsyncTestData {
+			data: Input;
+
 			constructor(data) {
 				this.data = data;
 			}
@@ -395,13 +417,13 @@ describe(`pMap`, () => {
 			try {
 				await pMap(new AsyncTestData([]), () => {}, { concurrency: 0 });
 			} catch (err) {
-				expect(err instanceof TypeError).toBe(true);
+				expect(err instanceof PMapError).toBe(true);
 			}
 
 			try {
 				await pMap(new AsyncTestData([]), () => {}, { concurrency: 1.5 });
 			} catch (err) {
-				expect(err instanceof TypeError).toBe(true);
+				expect(err instanceof PMapError).toBe(true);
 			}
 
 			let res = await pMap(new AsyncTestData([]), () => {}, { concurrency: 1 });
@@ -470,12 +492,13 @@ describe(`pMap`, () => {
 				3,
 			];
 
-			const mappedValues = [];
+			const mappedValues: number[] = [];
 			try {
 				await pMap(new AsyncTestData(input), async value => {
-					value = typeof value === 'function' ? await value() : value;
-					mappedValues.push(value);
-					if (value === 1) {
+					// @ts-expect-error - ?
+					const v: number = typeof value === 'function' ? await value() : value;
+					mappedValues.push(v);
+					if (v === 1) {
 						await delay(100);
 						throw new Error('Boom!');
 					}
@@ -526,15 +549,13 @@ describe(`pMap`, () => {
 					return 3;
 				},
 			];
-			const mappedValues = [];
 
+			const mappedValues: number[] = [];
 			try {
 				await pMap(new AsyncTestData(input), async value => {
-					if (typeof value === 'function') {
-						value = await value();
-					}
-
-					mappedValues.push(value);
+					// @ts-expect-error - ?
+					const v: number = typeof value === 'function' ? await value() : value;
+					mappedValues.push(v);
 					// NOTE(joel): Throw for each item - all should fail and we should
 					// get only the first.
 					await delay(100);
@@ -550,7 +571,7 @@ describe(`pMap`, () => {
 
 	test('catches exception from source iterator - 1st item', async () => {
 		const input = new ThrowingIterator(100, 0);
-		const mappedValues = [];
+		const mappedValues: unknown[] = [];
 		try {
 			await pMap(
 				input,
@@ -574,7 +595,7 @@ describe(`pMap`, () => {
 	// next() and not from the constructor.
 	test('catches exception from source iterator - 2nd item', async () => {
 		const input = new ThrowingIterator(100, 1);
-		const mappedValues = [];
+		const mappedValues: unknown[] = [];
 		try {
 			await pMap(
 				input,
@@ -598,11 +619,11 @@ describe(`pMap`, () => {
 	// our next() is called from a catch block.
 	test('catches exception from source iterator - 2nd item after 1st item mapper throw', async () => {
 		const input = new ThrowingIterator(100, 1);
-		const mappedValues = [];
+		const mappedValues: number[] = [];
 		try {
 			await pMap(
 				input,
-				async value => {
+				async (value: number) => {
 					mappedValues.push(value);
 					await delay(100);
 					throw new Error('mapper threw error');
@@ -621,13 +642,14 @@ describe(`pMap`, () => {
 		let mapperCalled = false;
 
 		try {
+			// @ts-expect-error - Test invalid input type
 			await pMap(123456, async () => {
 				mapperCalled = true;
 				await delay(100);
 			});
 		} catch (err) {
 			expect(err.message).toBe(
-				'Expected `input` to be either an `Iterable` or `AsyncIterable`, got (number)',
+				`Expected 'input' to be an 'Iterable' or 'AsyncIterable', got (number)`,
 			);
 		}
 
@@ -636,7 +658,7 @@ describe(`pMap`, () => {
 
 	test('no unhandled rejected promises from mapper throws - infinite concurrency', async () => {
 		const input = [1, 2, 3];
-		const mappedValues = [];
+		const mappedValues: number[] = [];
 
 		try {
 			await pMap(input, async value => {
@@ -656,7 +678,7 @@ describe(`pMap`, () => {
 
 	test('no unhandled rejected promises from mapper throws - concurrency 1', async () => {
 		const input = [1, 2, 3];
-		const mappedValues = [];
+		const mappedValues: number[] = [];
 
 		try {
 			await pMap(

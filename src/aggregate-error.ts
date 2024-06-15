@@ -1,13 +1,13 @@
+export type ErrorLike = Error | { message: string } | string;
+
 /**
  * AggregateError aggregates mutliple errors into a single one.
- * @extends Error
  */
 export class AggregateError extends Error {
-	#errors;
-
+	_errors: ErrorLike[];
 	name = 'AggregateError';
 
-	constructor(errors) {
+	constructor(errors: ErrorLike[]) {
 		if (!Array.isArray(errors)) {
 			throw new TypeError(
 				`Expected input to be of type Array, got ${typeof errors}`,
@@ -15,9 +15,7 @@ export class AggregateError extends Error {
 		}
 
 		errors = errors.map(error => {
-			if (error instanceof Error) {
-				return error;
-			}
+			if (error instanceof Error) return error;
 
 			if (error !== null && typeof error === 'object') {
 				// NOTE(joel): Handle plain error objects with a message property
@@ -30,7 +28,7 @@ export class AggregateError extends Error {
 
 		let message = errors
 			.map(error =>
-				typeof error.stack === 'string'
+				error instanceof Error && typeof error.stack === 'string'
 					? cleanInternalStack(error.stack)
 					: String(error),
 			)
@@ -38,41 +36,39 @@ export class AggregateError extends Error {
 		message = '\n' + indentString(message, 4);
 		super(message);
 
-		this.#errors = errors;
+		this._errors = errors;
 	}
 
 	errors() {
-		// NOTE(joel): Return a copy of our private `#errors` array.
-		return this.#errors.slice();
+		// NOTE(joel): Return a copy of our private `_errors` array.
+		return this._errors.slice();
 	}
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 
 /**
- * cleanInternalStack
- * @param {string} stack
- * @returns {string}
+ * cleanInternalStack removes the internal stack trace from the error stack.
  */
-function cleanInternalStack(stack) {
+function cleanInternalStack(stack: string) {
 	return stack.replace(/\s+at .*aggregate-error\/index.js:\d+:\d+\)?/g, '');
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-/**
- * @typedef {Object} IndentOptions
- * @prop {string} [indent=' ']
- * @prop {boolean} [includeEmptyLines=false]
- */
+interface IndentOptions {
+	indent?: string;
+	includeEmptyLines?: boolean;
+}
 
 /**
- * indentString
- * @param {string} string
- * @param {number} [count=1]
- * @param {IndentOptions} [options={}]
+ * indentString indents each line in the input string.
  */
-export function indentString(string, count = 1, options = {}) {
+export function indentString(
+	string: string,
+	count = 1,
+	options: IndentOptions = {},
+) {
 	const { indent = ' ', includeEmptyLines = false } = options;
 
 	if (count === 0) {
