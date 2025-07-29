@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { pMap, pMapSkip, AggregateError, PMapError } from '../src/index';
+import { AggregateError, PMapError, pMap, pMapSkip } from '../src/index';
 
 ////////////////////////////////////////////////////////////////////////////////
 

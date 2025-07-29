@@ -33,7 +33,7 @@ export class AggregateError extends Error {
 					: String(error),
 			)
 			.join('\n');
-		message = '\n' + indentString(message, 4);
+		message = `\n${indentString(message, 4)}`;
 		super(message);
 
 		this._errors = errors;
