@@ -14,7 +14,7 @@ export class AggregateError extends Error {
 			);
 		}
 
-		errors = errors.map(error => {
+		errors = errors.map((error) => {
 			if (error instanceof Error) return error;
 
 			if (error !== null && typeof error === 'object') {
@@ -27,7 +27,7 @@ export class AggregateError extends Error {
 		});
 
 		let message = errors
-			.map(error =>
+			.map((error) =>
 				error instanceof Error && typeof error.stack === 'string'
 					? cleanInternalStack(error.stack)
 					: String(error),

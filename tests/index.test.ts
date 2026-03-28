@@ -1,10 +1,11 @@
 import { describe, expect, test } from 'vitest';
+
 import { AggregateError, PMapError, pMap, pMapSkip } from '../src/index';
 
 ////////////////////////////////////////////////////////////////////////////////
 
 function delay(ms: number) {
-	return new Promise(r => setTimeout(r, ms));
+	return new Promise((r) => setTimeout(r, ms));
 }
 
 function inRange(num: number, { start = 0, end }) {
@@ -275,7 +276,7 @@ describe(`pMap`, () => {
 
 		const mappedValues: number[] = [];
 		try {
-			await pMap(input, async value => {
+			await pMap(input, async (value) => {
 				value = typeof value === 'function' ? await value() : value;
 				mappedValues.push(value);
 				if (value === 1) {
@@ -294,14 +295,14 @@ describe(`pMap`, () => {
 	});
 
 	test('pMapSkip - base', async () => {
-		const res = await pMap([1, pMapSkip, 2], async value => value);
+		const res = await pMap([1, pMapSkip, 2], async (value) => value);
 		expect(res).toEqual([1, 2]);
 	});
 
 	test('pMapSkip - multiple', async () => {
 		const res = await pMap(
 			[1, pMapSkip, 2, pMapSkip, 3, pMapSkip, pMapSkip, 4],
-			async value => value,
+			async (value) => value,
 		);
 		expect(res).toEqual([1, 2, 3, 4]);
 	});
@@ -309,7 +310,7 @@ describe(`pMap`, () => {
 	test('pMapSkip - all', async () => {
 		const res = await pMap(
 			[pMapSkip, pMapSkip, pMapSkip, pMapSkip],
-			async value => value,
+			async (value) => value,
 		);
 		expect(res).toEqual([]);
 	});
@@ -374,7 +375,7 @@ describe(`pMap`, () => {
 
 		test('async with concurrency: 2 (random time sequence)', async () => {
 			const input = Array.from({ length: 10 }).map(() => randomInt(0, 100));
-			const mapper = async value => {
+			const mapper = async (value) => {
 				await delay(value);
 				return value;
 			};
@@ -387,7 +388,7 @@ describe(`pMap`, () => {
 
 		test('async with concurrency: 2 (problematic time sequence)', async () => {
 			const input = [100, 200, 10, 36, 13, 45];
-			const mapper = async value => {
+			const mapper = async (value) => {
 				await delay(value);
 				return value;
 			};
@@ -400,7 +401,7 @@ describe(`pMap`, () => {
 
 		test('async with concurrency: 2 (out of order time sequence)', async () => {
 			const input = [200, 100, 50];
-			const mapper = async value => {
+			const mapper = async (value) => {
 				await delay(value);
 				return value;
 			};
@@ -494,7 +495,7 @@ describe(`pMap`, () => {
 
 			const mappedValues: number[] = [];
 			try {
-				await pMap(new AsyncTestData(input), async value => {
+				await pMap(new AsyncTestData(input), async (value) => {
 					// @ts-expect-error - ?
 					const v: number = typeof value === 'function' ? await value() : value;
 					mappedValues.push(v);
@@ -516,7 +517,7 @@ describe(`pMap`, () => {
 		test('pMapSkip - base', async () => {
 			const res = await pMap(
 				new AsyncTestData([1, pMapSkip, 2]),
-				async value => value,
+				async (value) => value,
 			);
 			expect(res).toEqual([1, 2]);
 		});
@@ -524,7 +525,7 @@ describe(`pMap`, () => {
 		test('pMapSkip - multiple', async () => {
 			const res = await pMap(
 				new AsyncTestData([1, pMapSkip, 2, pMapSkip, 3, pMapSkip, pMapSkip, 4]),
-				async value => value,
+				async (value) => value,
 			);
 			expect(res).toEqual([1, 2, 3, 4]);
 		});
@@ -532,7 +533,7 @@ describe(`pMap`, () => {
 		test('pMapSkip - all', async () => {
 			const res = await pMap(
 				new AsyncTestData([pMapSkip, pMapSkip, pMapSkip, pMapSkip]),
-				async value => value,
+				async (value) => value,
 			);
 			expect(res).toEqual([]);
 		});
@@ -552,7 +553,7 @@ describe(`pMap`, () => {
 
 			const mappedValues: number[] = [];
 			try {
-				await pMap(new AsyncTestData(input), async value => {
+				await pMap(new AsyncTestData(input), async (value) => {
 					// @ts-expect-error - ?
 					const v: number = typeof value === 'function' ? await value() : value;
 					mappedValues.push(v);
@@ -575,7 +576,7 @@ describe(`pMap`, () => {
 		try {
 			await pMap(
 				input,
-				async value => {
+				async (value) => {
 					mappedValues.push(value);
 					await delay(100);
 					return value;
@@ -599,7 +600,7 @@ describe(`pMap`, () => {
 		try {
 			await pMap(
 				input,
-				async value => {
+				async (value) => {
 					mappedValues.push(value);
 					await delay(100);
 					return value;
@@ -661,7 +662,7 @@ describe(`pMap`, () => {
 		const mappedValues: number[] = [];
 
 		try {
-			await pMap(input, async value => {
+			await pMap(input, async (value) => {
 				mappedValues.push(value);
 				await delay(100);
 				throw new Error(`Oops! ${value}`);
@@ -683,7 +684,7 @@ describe(`pMap`, () => {
 		try {
 			await pMap(
 				input,
-				async value => {
+				async (value) => {
 					mappedValues.push(value);
 					await delay(100);
 					throw new Error(`Oops! ${value}`);
